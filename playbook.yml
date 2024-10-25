@@ -1,0 +1,25 @@
+# Ubuntu Playbook
+- hosts: all
+  tags:
+  - baseline
+  tasks:
+  - name: apt update
+    apt:
+      name: '*'
+      state: latest
+      update_cache: true
+    become: yes
+
+- name: Deploy with Docker Compose
+  hosts: all
+  become: yes
+  collections:
+    - community.docker
+
+- hosts: docker_ollama
+  become: true
+  vars:
+    docker_compose_dir: "/opt/ollama-webui"
+    #nginx_server_name: "your_domain.com"  # Optional, defaults to localhost
+  roles:
+    - ansible-ollama

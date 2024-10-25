@@ -1,0 +1,62 @@
+# NVIDIA/CUDA SUPPORT ADDED.
+---
+- name: Confirm system has NVIDIA GPU using lspci
+  shell: "lspci | grep -i nvidia"
+  register: nvidia_gpu_check
+  changed_when: false
+
+- name: Add NVIDIA GPG key
+  ansible.builtin.apt_key:
+    url: https://nvidia.github.io/libnvidia-container/gpgkey
+    state: present
+    keyring: /etc/apt/trusted.gpg.d/nvidia.gpg
+  when: nvidia_gpu_check.rc == 0
+
+- name: Update NVIDIA repository
+  ansible.builtin.shell: |
+    distribution=$(. /etc/os-release; echo $ID$VERSION_ID)
+    curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+  when: nvidia_gpu_check.rc == 0
+  changed_when: false
+
+- name: Update apt cache and get list of available nvidia-utils-server packages
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_cache_update
+
+- name: Install NVIDIA/Cuda packages
+  apt:
+    name:
+      - nvidia-container-toolkit
+      - nvidia-docker2
+      - nvidia-cuda-toolkit
+    state: present
+    update_cache: yes
+  notify: Restart_Docker
+
+- name: Ensure NVIDIA driver is installed
+  stat:
+    path: /proc/driver/nvidia/version
+  register: nvidia_driver_status
+  failed_when: nvidia_driver_status.stat.exists == false
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Get the installed NVIDIA driver version
+  command: cat /proc/driver/nvidia/version
+  register: nvidia_driver_version_output
+  when:
+    - ansible_distribution == 'Ubuntu'
+    - nvidia_driver_status.stat.exists
+  changed_when: false
+
+- name: Set the NVIDIA driver version fact
+  set_fact:
+    nvidia_driver_version: "{{ (nvidia_driver_version_output.stdout | regex_search('NVIDIA UNIX x86_64 Kernel Module\\s+([0-9]+)', '\\1'))[0] | string | trim }}"
+  when: nvidia_driver_version_output.stdout is defined
+
+- name: Install matching nvidia-utils-server version
+  apt:
+    name: "nvidia-utils-{{ nvidia_driver_version }}-server"
+    state: present
+  when: nvidia_driver_version is defined

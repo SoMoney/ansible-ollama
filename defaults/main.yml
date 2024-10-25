@@ -1,0 +1,3 @@
+---
+docker_compose_dir: "/opt/ollama-webui"
+nginx_server_name: "localhost"

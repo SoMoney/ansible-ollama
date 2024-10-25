@@ -1,0 +1,11 @@
+- name: Restart_Docker
+  ansible.builtin.systemd:
+    name: docker
+    state: restarted
+    enabled: yes
+
+- name: Restart Nginx container
+  community.docker.docker_container:
+    name: nginx
+    state: restarted
+    restart_policy: always

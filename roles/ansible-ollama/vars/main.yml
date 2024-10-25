@@ -1,0 +1,46 @@
+pip_install_packages:
+  - name: docker
+  - name: docker-compose
+
+# Popular models.  Uncomment runs you want, or add new ones here...
+ollama_models:
+  #- ollama run tinyllama
+  # tinyllama:  The TinyLlama project aims to pretrain a 1.1B Llama model on 3 trillion tokens.
+  - ollama run llama3.1
+  # llama3.1: a state-of-the-art model from Meta
+  - ollama run dolphin-llama3
+  # dolphin-llama3: Uncensored, based on Llama 3 that has a variety of instruction, conversational, and coding skills.
+  #- ollama run llava
+  # llava: Multimodal model combining vision and language understanding, mimicking GPT-4 capabilities.
+  #- ollama run orca2
+  # orca2: Fine-tuned Llama 2 model excelling in reasoning tasks.
+  #- ollama run nous-hermes
+  # nous-hermes: Model requiring significant RAM, optimized for various tasks.
+  #- ollama run meditrion
+  # meditrion: Medical domain model outperforming Llama 2 and GPT-3.5 in medical reasoning.
+  #- ollama run qwen2
+  # qwen2: Transformer-based model with extended context length, supporting English and Chinese.
+  #- ollama run aya
+  # aya: Multilingual model covering 23 languages, available in 8B and 35B sizes.
+  #- ollama run dolphin-llama3
+  # dolphin-llama3: Instructional and conversational model based on Llama 3.
+  #- ollama run mistrallite
+  # mistrallite: Fine-tuned Mistral model for long context tasks.
+  #- ollama run granite-code
+  # granite-code: IBM's model for code intelligence, available in multiple sizes.
+  #- ollama run gemma
+  # gemma: Open model by Google, inspired by Gemini models.
+  #- ollama run llama3.2
+  # llama3.2: Small Llama 3.2 models for various tasks.
+  #- ollama run nemotron
+  # nemotron: NVIDIA's customized Llama-3.1 model for helpful responses.
+  #- ollama run qwen
+  # qwen: Series of transformer-based models by Alibaba Cloud.
+  #- ollama run command-r
+  # command-r: Optimized for long context tasks and external API usage.
+  #- ollama run codelama
+  # codelama: Model for generating and discussing code, built on Llama 2.
+  #- ollama run yi-coder
+  # yi-coder: Open-source code language model with fewer than 10 billion parameters.
+  #- ollama run mistral
+  # mistral: Instruction-following and text completion model with function calling support.

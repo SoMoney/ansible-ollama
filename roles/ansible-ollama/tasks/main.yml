@@ -1,0 +1,145 @@
+---
+- name: "Add Docker GPG key to {{ ansible_distribution }}"
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+    keyring: /etc/apt/trusted.gpg.d/docker.gpg
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+
+- name: Check if system has NVIDIA GPU using lspci
+  shell: "lspci | grep -i nvidia"
+  register: nvidia_gpu_check
+  changed_when: false
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Install required Ubuntu packages
+  apt:
+    name:
+      - git
+      - build-essential
+      - python3
+      - python3-pip
+      - python3-venv
+      - libssl-dev
+      - libffi-dev
+      - python3-dev
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - software-properties-common
+      - docker-ce
+      - docker-compose-plugin
+      - openssl
+    state: present
+    update_cache: yes
+  when: ansible_distribution == 'Ubuntu'
+
+#BEGIN NVIDIA SETUP
+- name: If NVIDIA detected, Include nvidia.yml tasks.
+  include_tasks: "{{ item }}"
+  with_items:
+    - nvidia.yml
+  when:
+    -  nvidia_gpu_check.rc == 0
+    -  ansible_distribution == 'Ubuntu'
+
+#BEGIN DOCKER SETUP
+- name: Download Docker Compose
+  get_url:
+    url: https://github.com/docker/compose/releases/latest/download/docker-compose-Linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+
+- name: Verify Docker service is running
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Verify Docker Compose installation
+  command: docker-compose --version
+  register: docker_compose_version
+  changed_when: false
+
+- name: Ensure required directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ docker_compose_dir }}/nginx/ssl"
+    - "{{ docker_compose_dir }}/nginx/conf.d"
+
+- name: Generate self-signed SSL certificate for nginx https support.
+  ansible.builtin.command: |
+    openssl req -x509 -nodes -days 1095 -newkey rsa:2048 \
+    -keyout {{ docker_compose_dir }}/nginx/ssl/nginx.key \
+    -out {{ docker_compose_dir }}/nginx/ssl/nginx.crt \
+    -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=localhost"
+  args:
+    creates: "{{ docker_compose_dir }}/nginx/ssl/nginx.crt"
+
+- name: Push Nginx configuration
+  ansible.builtin.template:
+    src: nginx-default.conf.j2
+    dest: "{{ docker_compose_dir }}/nginx/conf.d/default.conf"
+    mode: '0644'
+  register: nginx_result
+
+- name: Push docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ docker_compose_dir }}/docker-compose.yml"
+    mode: '0644'
+  register: compose_result
+
+- name: Push docker daemon.json
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: "/etc/docker/daemon.json"
+    mode: '0644'
+  register: daemon_json_result
+
+- name: Immediately Restart Docker on successfull Push
+  ansible.builtin.systemd:
+    name: docker
+    state: restarted
+    enabled: yes
+  when: nginx_result.changed or compose_result.changed or daemon_json_result.changed
+
+- name: "Deploy Docker Compose stack (Stand by, This may take several minutes...)"
+  community.docker.docker_compose_v2:
+    project_name: ollama
+    project_src: "{{ docker_compose_dir }}"
+    files:
+      - docker-compose.yml
+    state: present
+    pull: always
+
+- name: Wait for services to start
+  ansible.builtin.wait_for:
+    host: localhost
+    port: "{{ item }}"
+    timeout: 300
+  loop:
+    - 443
+    - 11434
+    - 3000
+
+- name: Install LLMs into Ollama container if ollama_models uncommented from vars
+  community.docker.docker_container_exec:
+    container: ollama
+    command: "{{ item }}"
+    tty: true
+  loop: "{{ ollama_models }}"
+  when: ollama_models | length > 0
+  loop_control:
+    loop_var: item
+  changed_when: false
+  notify: Restart_Docker
