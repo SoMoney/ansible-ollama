@@ -26,11 +26,22 @@ ansible-galaxy collection install community.docker
 The Ansible `./inventory` file assumes the server is called "docker-server". If you want to continue using that alias, you will need to edit your Ansible server's `/etc/hosts` file so it's reachable.
 
 Example:
-
+* Edit /etc/hosts
 ```bash
 sudo vi /etc/hosts
 # IP to openWebUI alias on Ansible server
 192.168.x.x ai docker-server
+```
+* Generate an ssh key
+```
+cd  ~
+ssh-keygen
+<enter>
+<enter>
+```
+* Copy your newly generated rsa pub key to docker-server
+```
+ssh-copy-id docker-server
 ```
 
 ## Models
