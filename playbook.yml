@@ -17,9 +17,10 @@
     - community.docker
 
 - hosts: docker_ollama
-  become: true
+  become: yes
   vars:
     docker_compose_dir: "/opt/ollama-webui"
     #nginx_server_name: "your_domain.com"  # Optional, defaults to localhost
   roles:
     - ansible-ollama
+    
