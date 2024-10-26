@@ -1,4 +1,4 @@
-# Make sure docker-server can be reachead '/etc/hosts' and /etc/sudoers on target is setup 'username ALL=(ALL:ALL) NOPASSWD:ALL'.
+# Make sure docker-server can be reached '/etc/hosts' and /etc/sudoers on target is setup 'username ALL=(ALL:ALL) NOPASSWD:ALL'.
 #
 [docker_ollama]
-docker-server ansible_become=yes
+docker-server ansible_become=yes ansible_host=your_server_ip ansible_user=your_ssh_user
