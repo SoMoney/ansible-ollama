@@ -23,7 +23,7 @@ ansible-galaxy collection install community.docker
 
 ## Configuration
 
-The Ansible `./inventory` file assumes the server is called "docker-server". If you want to continue using that alias, you will need to edit your Ansible server's `/etc/hosts` file so it's reachable.
+The Ansible `./inventory` file assumes the server is called "docker-server". If you want to continue using that alias, edit your Ansible server's `/etc/hosts` file so it's reachable, and copy your ansible servers rsa pub key to it.
 
 Example:
 * Edit /etc/hosts
