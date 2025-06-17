@@ -10,11 +10,11 @@
     repo: deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
     state: present
 
-- name: Check if system has NVIDIA GPU using lspci
+- name: "Check if system has NVIDIA GPU using lspci"
   shell: "lspci | grep -i nvidia"
   register: nvidia_gpu_check
-  changed_when: false
   when: ansible_distribution == 'Ubuntu'
+  failed_when: nvidia_gpu_check.rc not in [ 0, 1 ]
 
 - name: Install required Ubuntu packages
   apt:
