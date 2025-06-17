@@ -7,6 +7,7 @@ services:
       - ollama_data:/root/.ollama
     ports:
       - "11434:11434"
+{% if nvidia_gpu_check.rc == 0 %}
     deploy:
       resources:
         reservations:
@@ -14,6 +15,7 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+{% endif %}
     networks:
       - ollama_network
 
@@ -27,6 +29,7 @@ services:
       - "3000:8080"
     depends_on:
       - ollama
+{% if nvidia_gpu_check.rc == 0 %}
     deploy:
       resources:
         reservations:
@@ -34,6 +37,7 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+{% endif %}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
